@@ -1,0 +1,18 @@
+[package]
+name = "spidap"
+version = "0.1.0"
+authors = ["Adam Greig <adam@adamgreig.com>"]
+edition = "2018"
+repository = "https://github.com/adamgreig/ecpdap"
+license = "Apache-2.0 OR MIT"
+description = "Access SPI flash memories using CMSIS-DAP probes"
+
+[dependencies]
+log = "0.4.11"
+anyhow = "1.0.34"
+thiserror = "1.0.22"
+pretty_env_logger = "0.4.0"
+clap = "2.33.2"
+indicatif = "0.15.0"
+spi-flash = "0.2.2"
+jtagdap = "0.1.0"

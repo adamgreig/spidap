@@ -1,0 +1,94 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install additional targets
+        run: |
+          rustup target add x86_64-pc-windows-gnu
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full build-essential pkg-config \
+              libusb-dev libusb-1.0 gcc-mingw-w64-x86-64
+
+      - name: Download libusb DLLs for Windows
+        run: |
+          wget https://github.com/libusb/libusb/releases/download/v1.0.23/libusb-1.0.23.7z
+          mkdir libusb
+          mv libusb-1.0.23.7z libusb/
+          cd libusb
+          7z x libusb-1.0.23.7z
+
+      - name: Build for Linux x86_64
+        run: |
+          cargo clean
+          cargo build --release
+          cp target/release/spidap spidap_linux_x86_64
+
+      - name: Build for Windows x86_64
+        env:
+          PKG_CONFIG_ALLOW_CROSS: 1
+          RUSTFLAGS: -L ${{ github.workspace }}/libusb/MinGW64/dll/
+        run: |
+          cargo clean
+          cargo build --release --target x86_64-pc-windows-gnu
+          cp target/x86_64-pc-windows-gnu/release/spidap.exe spidap_windows_x86_64.exe
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
+          body: |
+            In this release:
+
+
+            The following pre-built files are available:
+              * `spidap_linux_x86_64`: spidap software for Linux (64-bit)
+              * `spidap_windows_x86_64.exe`: spidap software for Windows (64-bit)
+
+            spidap recommends libusb be installed; on Linux it should suffice to install libusb-1.0, on Windows download the pre-built DLLs from [libusb.info](https://libusb.info/) and either install them system-wide or put them in the same directory as your executable. Without libusb, only the slower HID-based CMSIS-DAPv1 protocol is available.
+
+      - name: Upload spidap for Linux x86_64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: spidap_linux_x86_64
+          asset_name: spidap_linux_x86_64
+          asset_content_type: application/octet-stream
+
+      - name: Upload spidap for Windows x86_64
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: spidap_windows_x86_64.exe
+          asset_name: spidap_windows_x86_64.exe
+          asset_content_type: application/octet-stream
