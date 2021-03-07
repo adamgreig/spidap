@@ -16,6 +16,14 @@ The probe must be connected directly to the SPI flash:
 | JTDI        | SDI
 | JTDO        | SDO
 
+This crate uses [jtagdap] to handle CMSIS-DAP and JTAG, and [spi-flash-rs] to
+handle the SPI flash itself. For programming ECP5 FPGAs over JTAG using
+CMSIS-DAP probes, check out [ecpdap], which uses the same libraries.
+
+[jtagdap]: https://github.com/adamgreig/jtagdap
+[spi-flash-rs]: https://github.com/adamgreig/spi-flash-rs
+[ecpdap]: https://github.com/adamgreig/ecpdap
+
 ## Pre-built Binaries
 
 Pre-built binaries are available for Windows and Linux on the [Releases] page.
